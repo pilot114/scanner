@@ -82,15 +82,17 @@ func main() {
     ip := ""
 
     // https://ant.isi.edu/address/
-    for b := 0; b <= 255; b++ {
-        for c := 0; c <= 255; c++ {
-            for d := 0; d <= 255; d++ {
-                ip = fmt.Sprintf("%s.%s.%s.%s", a, strconv.Itoa(b), strconv.Itoa(c), strconv.Itoa(d))
-                ips <- ip
+    go func() {
+        for b := 0; b <= 255; b++ {
+            for c := 0; c <= 255; c++ {
+                for d := 0; d <= 255; d++ {
+                    ip = fmt.Sprintf("%s.%s.%s.%s", a, strconv.Itoa(b), strconv.Itoa(c), strconv.Itoa(d))
+                    ips <- ip
+                }
             }
         }
-    }
-    close(ips)
+        close(ips)
+    }()
 
     count := 0
     for i := 1; i < 256*256*256; i++ {
