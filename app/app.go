@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/op/go-logging"
     "time"
+    "encoding/json"
 )
 
 type ResponseInfo struct {
@@ -33,7 +34,7 @@ func getHeaders(url string) ResponseInfo {
     response, err := client.Get(fmt.Sprintf("http://%s",url))
     duration := time.Since(start)
 
-    info := ResponseInfo{make(map[string]string), duration/time.Millisecond, url, ""}
+    info := ResponseInfo{make(map[string]string), duration, url, ""}
 
     if err != nil {
         info.error = fmt.Sprintf("Error download: %s", err)
@@ -98,7 +99,8 @@ func main() {
     for i := 1; i < 256*256*256; i++ {
         info := <- resInfo
         if len(info.headers) > 0 {
-            fmt.Println(info)
+            jsonHeaders, _ := json.Marshal(info.headers)
+            fmt.Printf("%s %d %s\n", jsonHeaders, info.time.Nanoseconds()/1e6, info.ip) // milliseconds
             count = count + 1
         }
     }
