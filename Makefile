@@ -13,7 +13,7 @@ build-dev:
 
 run-dev:
 	@docker run --rm -d --name micro_headers_dev_con micro_headers_dev app $(a) $(w)
-	@docker logs -f micro_headers_dev_con > output/$(a).data 2>output/error.log &
+	@docker logs -f micro_headers_dev_con > output/$(a).data 2>output/error$(a).log &
 
 stop-dev:
 	@docker stop micro_headers_dev_con
