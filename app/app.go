@@ -27,7 +27,7 @@ func getHeaders(url string) ResponseInfo {
     transport := &http.Transport{
         TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
     }
-    timeout := time.Duration(10 * time.Second)
+    timeout := time.Duration(3 * time.Second)
     client := &http.Client{Transport: transport, Timeout: timeout}
 
     start := time.Now()

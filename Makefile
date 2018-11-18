@@ -21,7 +21,7 @@ enter:
 # запускаем, лог ошибок и данные выводим в соотвествующие файлы
 run:
 	@docker run --rm -d --name micro_headers_instance micro_headers /root/app $(a) $(w)
-	@docker logs -f micro_headers_instance > output/$(a).data 2>output/error$(a).log &
+	@docker logs -f micro_headers_instance > output/$(a)_$(w).data 2>output/$(a)_$(w).log &
 
 stop:
 	@docker stop micro_headers_instance
