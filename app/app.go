@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/op/go-logging"
 )
 
 // ResponseInfo : ответ
@@ -20,9 +18,6 @@ type ResponseInfo struct {
 	ip      string
 	error   string
 }
-
-// кастомный лог
-var log = logging.MustGetLogger("example")
 
 func getHeaders(url string) ResponseInfo {
 
@@ -63,17 +58,11 @@ func worker(wid int, ips <-chan string, headers chan<- ResponseInfo) {
 
 func main() {
 	a := os.Args[1]
-	workerLimit, _ := strconv.Atoi(os.Args[2])
-
-	var format = logging.MustStringFormatter(
-		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
-	)
-	backend := logging.NewLogBackend(os.Stderr, "", 0)
-	backendFormatter := logging.NewBackendFormatter(backend, format)
-	logging.SetBackend(backendFormatter)
+	b := os.Args[2]
+	workerLimit, _ := strconv.Atoi(os.Args[3])
 
 	// каналы: источник адресов и получатель заголовков
-	ips := make(chan string, 17000000)    // 17kk
+	ips := make(chan string, 66000)       // over 65535
 	resInfo := make(chan ResponseInfo, 3) // 1 достаточно, но возьмём с запасом
 
 	// стартуем воркеров
@@ -86,27 +75,28 @@ func main() {
 
 	// https://ant.isi.edu/address/
 	go func() {
-		for b := 0; b <= 255; b++ {
-			for c := 0; c <= 255; c++ {
-				for d := 0; d <= 255; d++ {
-					ip = fmt.Sprintf("%s.%s.%s.%s", a, strconv.Itoa(b), strconv.Itoa(c), strconv.Itoa(d))
-					ips <- ip
-				}
+		for c := 0; c <= 255; c++ {
+			for d := 0; d <= 255; d++ {
+				ip = fmt.Sprintf("%s.%s.%s.%s", a, b, strconv.Itoa(c), strconv.Itoa(d))
+				ips <- ip
 			}
 		}
 		close(ips)
 	}()
 
 	count := 0
-	for i := 1; i < 256*256*256; i++ {
+	for i := 1; i <= 256*256; i++ {
 		info := <-resInfo
 		if len(info.headers) > 0 {
 			jsonHeaders, _ := json.Marshal(info.headers)
 			fmt.Printf("%s %d %s\n", jsonHeaders, info.time.Nanoseconds()/1e6, info.ip) // milliseconds
 			count = count + 1
 		}
+		if info.error != "" {
+			fmt.Fprintf(os.Stderr, "%s %d %s\n", info.error, info.time.Nanoseconds()/1e6, info.ip)
+		}
 	}
 
 	duration := time.Since(start)
-	log.Infof("Total time: %s, found: %d", duration, count)
+	fmt.Printf("Total time: %s, found: %d\n", duration, count)
 }

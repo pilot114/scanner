@@ -6,7 +6,7 @@ help:
 
 	@echo "  build"
 	@echo "  enter"
-	@echo "  run a=INT w=INT (a - first octet in ip, w - count workers)"
+	@echo "  run a=INT b=INT w=INT (a - first octet in ip, b - second octet in ip, w - count workers)"
 	@echo "  stop"
 
 # компилируем. Для этого собираем контейнер с компилятором Go (если его ещё нет)
@@ -20,8 +20,8 @@ enter:
 
 # запускаем, лог ошибок и данные выводим в соотвествующие файлы
 run:
-	@docker run --rm -d --name scanner_instance pilot114/scanner /root/app $(a) $(w)
-	@docker logs -f scanner_instance > output/$(a)_$(w).data 2>output/$(a)_$(w).log &
+	@docker run --rm -d --name scanner_instance pilot114/scanner /root/app $(a) $(b) $(w)
+	@docker logs -f scanner_instance > output/$(a)_$(b)_$(w).data 2>output/$(a)_$(b)_$(w).log &
 
 stop:
 	@docker stop scanner_instance

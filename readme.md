@@ -21,4 +21,4 @@
 
 Пример запуска:
 
-make run a=1 w=10000 > output/1.data
+make run a=1 w=1800 > output/1.data
