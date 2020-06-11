@@ -1,4 +1,4 @@
-### micro-headers
+### scanner
 
 Пример микросервиса на Go
 
