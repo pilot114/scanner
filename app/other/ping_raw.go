@@ -1,11 +1,11 @@
 package other
 
 import (
-"bytes"
-"errors"
-"net"
-"os"
-"time"
+	"bytes"
+	"errors"
+	"net"
+	"os"
+	"time"
 )
 
 const (

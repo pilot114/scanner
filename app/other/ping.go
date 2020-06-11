@@ -2,13 +2,14 @@ package other
 
 import (
 	"fmt"
+	"math/rand"
+	"net"
+	"os"
+	"strconv"
+	"time"
+
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
-	"time"
-	"net"
-	"strconv"
-	"math/rand"
-	"os"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 var ListenAddr = "0.0.0.0"
 var Timeout = 1
 
-func Receiver(addr string) (*icmp.PacketConn) {
+func Receiver(addr string) *icmp.PacketConn {
 	// слушаем входящие пакеты
 	c, err := icmp.ListenPacket("ip4:icmp", addr)
 	if err != nil {
@@ -39,8 +40,8 @@ func Ping(receiver *icmp.PacketConn, addr string) (*net.IPAddr, time.Duration, e
 		Type: ipv4.ICMPTypeEcho,
 		Code: 0,
 		Body: &icmp.Echo{
-			ID: rand.Intn(65000),
-			Seq: 1,
+			ID:   rand.Intn(65000),
+			Seq:  1,
 			Data: []byte(""),
 		},
 	}
@@ -76,10 +77,10 @@ func Ping(receiver *icmp.PacketConn, addr string) (*net.IPAddr, time.Duration, e
 		return dst, 0, err
 	}
 	switch rm.Type {
-		case ipv4.ICMPTypeEchoReply:
-			return dst, duration, nil
-		default:
-			return dst, 0, fmt.Errorf("got %+v from %v; want echo reply", rm, peer)
+	case ipv4.ICMPTypeEchoReply:
+		return dst, duration, nil
+	default:
+		return dst, 0, fmt.Errorf("got %+v from %v; want echo reply", rm, peer)
 	}
 }
 
@@ -119,8 +120,6 @@ func main() {
 
 	//p("192.30.253.113")
 
-
-
 	addr, _ := net.ResolveIPAddr("ip", "192.30.253.113")
 	conn, _ := net.DialIP("ip4:icmp", addr, addr)
 
@@ -153,18 +152,17 @@ func main() {
 		fmt.Println("Sequence matches")
 	}
 
-
 	go func() {
 		for b := 0; b <= 255; b++ {
-				for c := 0; c <= 255; c++ {
-					for d := 0; d <= 255; d++ {
-							ip = fmt.Sprintf("%s.%s.%s.%s", a, strconv.Itoa(b), strconv.Itoa(c), strconv.Itoa(d))
-							//p(ip)
-					}
+			for c := 0; c <= 255; c++ {
+				for d := 0; d <= 255; d++ {
+					ip = fmt.Sprintf("%s.%s.%s.%s", a, strconv.Itoa(b), strconv.Itoa(c), strconv.Itoa(d))
+					//p(ip)
 				}
+			}
 		}
 	}()
 
 	done := make(chan int)
-	<- done
+	<-done
 }

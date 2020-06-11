@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"encoding/binary"
+
 	"golang.org/x/net/icmp"
 )
 
@@ -66,4 +67,3 @@ func SendIcmpPacket(conn *net.IPConn, packet *icmp.Message) {
 		panic(err)
 	}
 }
-

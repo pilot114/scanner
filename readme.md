@@ -21,4 +21,4 @@
 
 Пример запуска:
 
-run-dev a=1 w=10000 > output/1.data
+make run a=1 w=10000 > output/1.data
