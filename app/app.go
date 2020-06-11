@@ -13,6 +13,7 @@ import (
 	"github.com/op/go-logging"
 )
 
+// ResponseInfo : ответ
 type ResponseInfo struct {
 	headers map[string]string
 	time    time.Duration
