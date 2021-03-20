@@ -21,7 +21,7 @@ enter:
 # запускаем, лог ошибок и данные выводим в соотвествующие файлы
 run:
 	@docker run --rm -d --name scanner_instance pilot114/scanner /root/app $(a) $(b) $(w)
-	@docker logs -f scanner_instance > output/$(a)_$(b)_$(w).data 2>output/$(a)_$(b)_$(w).log &
+	@docker logs -f scanner_instance > output/$(a)_$(b)_$(w)_icmp.data 2>output/$(a)_$(b)_$(w)_icmp.log &
 
 stop:
 	@docker stop scanner_instance

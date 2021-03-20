@@ -2,24 +2,33 @@ package main
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pilot114/scanner/proto"
 )
 
-// ResponseInfo : ответ
-type ResponseInfo struct {
+// ResponseHTTPInfo : ответ
+type ResponseHTTPInfo struct {
 	headers map[string]string
 	time    time.Duration
 	ip      string
 	error   string
 }
 
-func getHeaders(url string) ResponseInfo {
+// ResponseInfo : ответ
+type ResponseInfo struct {
+	ip   string
+	resv int
+	sent int
+	avg  time.Duration
+}
+
+func getHeaders(url string) ResponseHTTPInfo {
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -31,7 +40,7 @@ func getHeaders(url string) ResponseInfo {
 	response, err := client.Get(fmt.Sprintf("http://%s", url))
 	duration := time.Since(start)
 
-	info := ResponseInfo{make(map[string]string), duration, url, ""}
+	info := ResponseHTTPInfo{make(map[string]string), duration, url, ""}
 
 	if err != nil {
 		info.error = fmt.Sprintf("Error download: %s", err)
@@ -49,10 +58,34 @@ func getHeaders(url string) ResponseInfo {
 	return info
 }
 
-func worker(wid int, ips <-chan string, headers chan<- ResponseInfo) {
+func icmp(url string) ResponseInfo {
+
+	sent := 3 // сколько отправили
+	resv := 0 // сколько получили
+	avg := time.Duration(0)
+
+	for i := 1; i <= sent; i++ {
+		duration, err := proto.Ping(url)
+		avg = time.Duration(int64(avg+duration) / int64(i))
+		if err == nil {
+			resv = resv + 1
+		}
+		// быстро или надежно? =)
+		// time.Sleep(time.Millisecond * 100)
+	}
+
+	return ResponseInfo{
+		ip:   url,
+		resv: resv,
+		sent: sent,
+		avg:  avg,
+	}
+}
+
+func worker(wid int, ips <-chan string, responses chan<- ResponseInfo) {
 	for ip := range ips {
-		//log.Debugf("worker %d get ip %s", wid, ip)
-		headers <- getHeaders(ip)
+		// fmt.Printf("worker %d get ip %s\n", wid, ip)
+		responses <- icmp(ip)
 	}
 }
 
@@ -62,8 +95,8 @@ func main() {
 	workerLimit, _ := strconv.Atoi(os.Args[3])
 
 	// каналы: источник адресов и получатель заголовков
-	ips := make(chan string, 66000)       // over 65535
-	resInfo := make(chan ResponseInfo, 3) // 1 достаточно, но возьмём с запасом
+	ips := make(chan string, 66000)
+	resInfo := make(chan ResponseInfo, 3)
 
 	// стартуем воркеров
 	for wid := 1; wid <= workerLimit; wid++ {
@@ -84,19 +117,23 @@ func main() {
 		close(ips)
 	}()
 
-	count := 0
-	for i := 1; i <= 256*256; i++ {
+	total := 256 * 256
+	successCount := 0
+
+	for total > 0 {
 		info := <-resInfo
-		if len(info.headers) > 0 {
-			jsonHeaders, _ := json.Marshal(info.headers)
-			fmt.Printf("%s %d %s\n", jsonHeaders, info.time.Nanoseconds()/1e6, info.ip) // milliseconds
-			count = count + 1
+
+		if info.resv > 0 {
+			// json, _ := json.Marshal(info)
+			fmt.Printf("%s %d %d %s\n", info.ip, info.resv, info.sent, info.avg)
+			successCount = successCount + 1
+		} else {
+			// json, _ := json.Marshal(info)
+			fmt.Fprintf(os.Stderr, "%s %d %d\n", info.ip, info.resv, info.sent)
 		}
-		if info.error != "" {
-			fmt.Fprintf(os.Stderr, "%s %d %s\n", info.error, info.time.Nanoseconds()/1e6, info.ip)
-		}
+		total = total - 1
 	}
 
 	duration := time.Since(start)
-	fmt.Printf("Total time: %s, found: %d\n", duration, count)
+	fmt.Printf("Total time: %s, found: %d\n", duration, successCount)
 }
